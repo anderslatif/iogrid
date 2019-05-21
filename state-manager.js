@@ -9,7 +9,8 @@ StateManager.prototype.create = function (state) {
     id: state.id,
     tcid: stateCellIndex, // Target cell index.
     type: state.type,
-    create: state
+    create: state,
+    message: ''
   };
   if (state.swid != null) {
     stateRef.swid = state.swid;
@@ -26,6 +27,13 @@ StateManager.prototype.update = function (stateRef, operation) {
 
 StateManager.prototype.delete = function (stateRef) {
   this.stateRefs[stateRef.id].delete = 1;
+};
+
+StateManager.prototype.updateChat = function (stateRef, message) {
+  const notAllowed = ['meta', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
+  if (!notAllowed.includes(message.toLowerCase())) {
+    this.stateRefs[stateRef.id].op = message;
+  }
 };
 
 module.exports.StateManager = StateManager;

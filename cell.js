@@ -252,9 +252,23 @@ CellController.prototype.applyPlayerOps = function (playerIds, players, coins) {
 
     var playerOp = player.op;
     var moveSpeed;
-    if (player.subtype == 'bot') {
+    if (player.subtype === 'bot') {
       moveSpeed = player.speed;
-    } else {
+    } else if (playerOp) {
+      if (playerOp.length === 1) {
+
+        if (player.message.length > 50) {
+          player.message = player.op;
+        } else {
+          player.message += player.op;
+        }
+      } else if (typeof  playerOp === 'string') {
+        if (player.op.toLowerCase() === 'enter') {
+          player.message = '';
+        } else if (player.op.toLowerCase() === 'backspace') {
+          player.message = player.message.substring(0, player.message.length-1);
+        }
+      }
       moveSpeed = config.PLAYER_DEFAULT_MOVE_SPEED;
     }
 

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello Phaser!</title>
+    <title>Hello Stranger!</title>
     <link rel="icon" type="image/png" href="/favicon.ico">
-    <script type="text/javascript" src="/socketcluster.js"></script>
-    <script src="/sc-codec-min-bin.js"></script>
-    <script src="/phaser.min.js"></script>
-    <script src="/rbush.min.js"></script>
-    <script src="/SAT.min.js"></script>
+    <script type="text/javascript" src="/libraries/socketcluster.js"></script>
+    <script src="/libraries/sc-codec-min-bin.js"></script>
+    <script src="/libraries/phaser.min.js"></script>
+    <script src="/libraries/rbush.min.js"></script>
+    <script src="/libraries/SAT.min.js"></script>
     <script src="/channel-grid.js"></script>
     <style>
       html {
@@ -53,6 +53,10 @@
         var SERVER_WORKER_ID;
 
         var youTextures = {
+/*          up: 'img/self/self-up.png',
+          left: 'img/self/self-left.png',
+          right: 'img/self/self-right.png',
+          down: 'img/self/self-down.png'*/
           up: 'img/you-back.gif',
           left: 'img/you-side-left.gif',
           right: 'img/you-side-right.gif',
@@ -83,7 +87,7 @@
 
         // 1 means no smoothing. 0.1 is quite smooth.
         var CAMERA_SMOOTHING = 1;
-        var BACKGROUND_TEXTURE = 'img/background-texture.png';
+        var BACKGROUND_TEXTURE = 'img/background/background-texture.png';
 
         socket.emit('getWorldInfo', null, function (err, data) {
           WORLD_WIDTH = data.width;
@@ -105,6 +109,23 @@
             exchange: socket
           });
 
+          document.addEventListener('keydown', event => {
+            event.preventDefault();
+            const keycode = event.keyCode || event.which;
+            const valid =
+                    (keycode > 47 && keycode < 58) || // number keys
+                    keycode === 32 || keycode === 13 || // spacebar & return key(s) (if you want to allow carriage returns)
+                    (keycode > 64 && keycode < 91) || // letter keys
+                    (keycode > 95 && keycode < 112) || // numpad keys
+                    (keycode > 185 && keycode < 193) || // ;=,-./` (in order)
+                    (keycode > 218 && keycode < 223); // [\]' (in order)
+            if ((event.metaKey || event.ctrlKey) && ( String.fromCharCode(event.which).toLowerCase() === 'r') ) {
+              location.reload();
+            } else {
+              socket.emit('chat', {'message': event.key});
+            }
+          });
+
           game = new Phaser.Game('100', '100', Phaser.AUTO, '', {
             preload: preload,
             create: create,
@@ -118,7 +139,7 @@
             up: game.input.keyboard.addKey(Phaser.Keyboard.UP),
             down: game.input.keyboard.addKey(Phaser.Keyboard.DOWN),
             right: game.input.keyboard.addKey(Phaser.Keyboard.RIGHT),
-            left: game.input.keyboard.addKey(Phaser.Keyboard.LEFT)
+            left: game.input.keyboard.addKey(Phaser.Keyboard.LEFT),
           };
 
           game.load.image('background', BACKGROUND_TEXTURE);
@@ -148,6 +169,9 @@
           stateList.forEach(function (state) {
             if (state.type == 'player') {
               updateUser(state);
+              if (state.subtype !== 'bot') {
+                updateChatText(state.id, state.message)
+              }
             } else if (state.type == 'coin') {
               if (state.delete) {
                 removeCoin(state);
@@ -162,7 +186,7 @@
         var watchingCells = {};
 
         /*
-          Data channels within our game are divided a grids and we only watch the cells
+          Data channels within our game are divided as grids and we only watch the cells
           which are within our player's line of sight.
           As the player moves around the game world, we need to keep updating the cell subscriptions.
         */
@@ -202,6 +226,7 @@
           if (user) {
             user.sprite.destroy();
             user.label.destroy();
+            user.chatLabel.destroy();
             delete users[userData.id];
           }
         }
@@ -220,14 +245,23 @@
           user.swid = userData.swid;
           user.name = userData.name;
 
-          var textStyle = {
+          var nameTextStyle = {
             font: '16px Arial',
-            fill: '#666666',
-            align: 'center'
+            fill: '#000000',
+            align: 'center',
+            wordWrap: { width: 300 }
           };
 
-          user.label = game.add.text(0, 0, user.name, textStyle);
+          var chatTextStyle = {
+            font: '18px Arial',
+            fill: '#000000',
+            align: 'center',
+          };
+
+          user.label = game.add.text(0, 0, user.name, nameTextStyle);
           user.label.anchor.set(0.5);
+
+          user.chatLabel = game.add.text(20, 20, 'Enter something here', chatTextStyle);
 
           var sprite;
 
@@ -295,6 +329,17 @@
           } else {
             createUserSprite(userData);
           }
+        }
+
+        function updateChatText(userId, message) {
+          var user = users[userId];
+          user.chatLabel.setText(message);
+          user.chatLabel.alignTo(user.sprite, Phaser.TOP_CENTER, 0, 10);
+          /*if (message.length === 0) {
+            game.add.tween(user.chatLabel).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
+            game.add.tween(user.chatLabel).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
+          }*/
+
         }
 
         function removeCoin(coinData) {

@@ -717,7 +717,8 @@ module.exports.run = function (worker) {
         y: startingPos.y,
         diam: PLAYER_DIAMETER,
         mass: PLAYER_MASS,
-        score: 0
+        score: 0,
+        message: ''
       };
 
       socket.player = stateManager.create(player);
@@ -728,6 +729,12 @@ module.exports.run = function (worker) {
     socket.on('action', function (playerOp) {
       if (socket.player) {
         stateManager.update(socket.player, playerOp);
+      }
+    });
+
+    socket.on('chat', function (message) {
+      if (socket.player) {
+        stateManager.updateChat(socket.player, message.message);
       }
     });
 

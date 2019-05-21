@@ -2,6 +2,9 @@
   "name": "iogrid-game",
   "description": "A simple demo built using SocketCluster and Phaser",
   "version": "2.0.0",
+  "scripts": {
+    "start": "SOCKETCLUSTER_WS_ENGINE=ws ENV=dev node server.js -w 3 -b 1"
+  },
   "dependencies": {
     "connect": "3.0.1",
     "express": "4.13.1",
@@ -28,5 +31,10 @@
     "iogrid",
     "iogame"
   ],
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.2"
+  }
 }
